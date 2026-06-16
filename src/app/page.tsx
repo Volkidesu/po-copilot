@@ -5,7 +5,6 @@ import ReactMarkdown from "react-markdown";
 import { MODES, type Mode } from "@/lib/prompts";
 
 export default function Home() {
-  const [mode, setMode] = useState<Mode>("prd");
   const [input, setInput] = useState("");
   const [output, setOutput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -13,10 +12,9 @@ export default function Home() {
   const [copied, setCopied] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
 
-  const current = MODES.find((m) => m.id === mode)!;
+  const current = MODES[0];
 
-  async function generate(overrideMode?: Mode, overrideInput?: string) {
-    const useMode = overrideMode ?? mode;
+  async function generate(overrideInput?: string) {
     const useInput = (overrideInput ?? input).trim();
     if (!useInput || isLoading) return;
 
@@ -32,7 +30,7 @@ export default function Home() {
       const res = await fetch("/api/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ mode: useMode, input: useInput }),
+        body: JSON.stringify({ mode: "prd", input: useInput }),
         signal: controller.signal,
       });
 
@@ -60,22 +58,10 @@ export default function Home() {
     }
   }
 
-  function selectMode(next: Mode) {
-    setMode(next);
-    setOutput("");
-    setError(null);
-  }
-
   function useExample() {
     setInput(current.example);
   }
 
-  async function chainToStories() {
-    const prd = output;
-    setMode("stories");
-    setInput(prd);
-    await generate("stories", prd);
-  }
 
   async function copyOutput() {
     await navigator.clipboard.writeText(output);
@@ -94,28 +80,10 @@ export default function Home() {
           PO-Copilot
         </h1>
         <p className="max-w-xl text-zinc-600 dark:text-zinc-400">
-          Turn a product idea into a structured PRD, break a PRD into epics and
-          user stories, and draft release notes from a changelog — powered by
-          Claude. Built by a product manager who ships.
+          Turn a product idea into a structured Product Requirements Document —
+          powered by Claude. Built by a product manager who ships.
         </p>
       </header>
-
-      {/* Mode tabs */}
-      <div className="flex flex-wrap gap-2">
-        {MODES.map((m) => (
-          <button
-            key={m.id}
-            onClick={() => selectMode(m.id)}
-            className={`rounded-lg border px-3 py-2 text-sm transition-colors ${
-              mode === m.id
-                ? "border-zinc-900 bg-zinc-900 text-white dark:border-white dark:bg-white dark:text-black"
-                : "border-black/10 text-zinc-600 hover:bg-black/[.03] dark:border-white/15 dark:text-zinc-400 dark:hover:bg-white/[.05]"
-            }`}
-          >
-            <span className="font-medium">{m.label}</span>
-          </button>
-        ))}
-      </div>
 
       {/* Input */}
       <section className="flex flex-col gap-3">
@@ -169,14 +137,6 @@ export default function Home() {
           <div className="prose-output rounded-xl border border-black/10 bg-white p-6 dark:border-white/15 dark:bg-zinc-950">
             <ReactMarkdown>{output}</ReactMarkdown>
           </div>
-          {mode === "prd" && !isLoading && (
-            <button
-              onClick={chainToStories}
-              className="w-fit rounded-lg border border-zinc-900 px-4 py-2.5 text-sm font-medium transition-colors hover:bg-zinc-900 hover:text-white dark:border-white dark:hover:bg-white dark:hover:text-black"
-            >
-              → Turn this PRD into epics &amp; user stories
-            </button>
-          )}
         </section>
       )}
 

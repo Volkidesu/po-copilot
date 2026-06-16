@@ -1,6 +1,6 @@
 # PO-Copilot
 
-An AI product copilot that turns a product idea into a structured **PRD**, breaks a PRD into **epics & user stories**, and drafts **release notes** from a changelog — all streamed live from Claude.
+An AI product copilot that turns a product idea into a structured **PRD** (Product Requirements Document) — streamed live from Claude.
 
 > Built by [Volkan Bulut](https://www.linkedin.com/) — a product manager moving into AI Product Management, building the things instead of just specifying them.
 
@@ -10,23 +10,26 @@ An AI product copilot that turns a product idea into a structured **PRD**, break
 
 ## What it does
 
-Three modes, each backed by a system prompt that encodes real product-management craft:
+Takes a product idea described in 2–3 sentences and generates a complete, structured PRD including:
 
-| Mode | Input | Output |
-|------|-------|--------|
-| **PRD** | A product idea in 2–3 sentences | A complete PRD (problem, goals/non-goals, personas, requirements, **measurable success metrics**, risks, milestones) |
-| **Epics & User Stories** | A PRD or feature description | Epics with INVEST-checked user stories and Given/When/Then acceptance criteria |
-| **Release Notes** | Rough shipped-changes notes | Polished user-facing release notes + an internal changelog |
+- Problem & Context
+- Goals and Non-Goals
+- Target Users & Personas
+- High-level User Stories
+- Functional and Non-Functional Requirements
+- **Measurable Success Metrics** (real KPIs, not vague statements)
+- Risks & Open Questions
+- Milestones
 
-A one-click **chaining** step generates epics & stories directly from a freshly written PRD — demonstrating prompt chaining, not just single-shot generation.
+The system prompt encodes real product-management craft, so the output reads like a strong product owner wrote it.
 
 ## Why I built it
 
-As a PM, I know what a *good* PRD, a well-sliced user story, and clear release notes look like. This tool encodes that judgment into the prompts — so it's both a useful product and a demonstration that I can design *and* ship an AI feature end to end.
+As a PM, I know what a *good* PRD looks like. This tool encodes that judgment into the prompt — so it's both a useful product and a demonstration that I can design *and* ship an AI feature end to end.
 
 ## How it works
 
-- **Mode → system prompt.** Each mode maps to a tailored Claude system prompt in [`src/lib/prompts.ts`](src/lib/prompts.ts).
+- **System prompt.** A tailored Claude system prompt in [`src/lib/prompts.ts`](src/lib/prompts.ts) encodes product management best practices.
 - **Streaming route handler.** [`src/app/api/generate/route.ts`](src/app/api/generate/route.ts) validates the request and streams the response from Claude via the Vercel AI SDK (`streamText` → `toTextStreamResponse`).
 - **Client.** [`src/app/page.tsx`](src/app/page.tsx) reads the stream and renders it as Markdown in real time.
 
@@ -50,6 +53,6 @@ echo "ANTHROPIC_API_KEY=sk-ant-..." > .env.local
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000), pick a mode, click **Insert example**, and **Generate**.
+Open [http://localhost:3000](http://localhost:3000), click **Insert example**, and **Generate**.
 
 Get an API key at [console.anthropic.com](https://console.anthropic.com). `.env.local` is gitignored — your key never enters the repo.

@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "PO-Copilot — AI Product Copilot",
   description:
-    "Turn a product idea into a PRD, break it into epics and user stories, and draft release notes — powered by Claude.",
+    "Turn a product idea into a structured Product Requirements Document — powered by Claude.",
 };
 
 export default function RootLayout({
