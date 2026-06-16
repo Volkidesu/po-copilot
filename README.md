@@ -1,36 +1,55 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# PO-Copilot
 
-## Getting Started
+An AI product copilot that turns a product idea into a structured **PRD**, breaks a PRD into **epics & user stories**, and drafts **release notes** from a changelog — all streamed live from Claude.
 
-First, run the development server:
+> Built by [Volkan Bulut](https://www.linkedin.com/) — a product manager moving into AI Product Management, building the things instead of just specifying them.
+
+**Live demo:** _coming soon_
+
+---
+
+## What it does
+
+Three modes, each backed by a system prompt that encodes real product-management craft:
+
+| Mode | Input | Output |
+|------|-------|--------|
+| **PRD** | A product idea in 2–3 sentences | A complete PRD (problem, goals/non-goals, personas, requirements, **measurable success metrics**, risks, milestones) |
+| **Epics & User Stories** | A PRD or feature description | Epics with INVEST-checked user stories and Given/When/Then acceptance criteria |
+| **Release Notes** | Rough shipped-changes notes | Polished user-facing release notes + an internal changelog |
+
+A one-click **chaining** step generates epics & stories directly from a freshly written PRD — demonstrating prompt chaining, not just single-shot generation.
+
+## Why I built it
+
+As a PM, I know what a *good* PRD, a well-sliced user story, and clear release notes look like. This tool encodes that judgment into the prompts — so it's both a useful product and a demonstration that I can design *and* ship an AI feature end to end.
+
+## How it works
+
+- **Mode → system prompt.** Each mode maps to a tailored Claude system prompt in [`src/lib/prompts.ts`](src/lib/prompts.ts).
+- **Streaming route handler.** [`src/app/api/generate/route.ts`](src/app/api/generate/route.ts) validates the request and streams the response from Claude via the Vercel AI SDK (`streamText` → `toTextStreamResponse`).
+- **Client.** [`src/app/page.tsx`](src/app/page.tsx) reads the stream and renders it as Markdown in real time.
+
+## Tech stack
+
+- **Next.js** (App Router) + **TypeScript** + **Tailwind CSS**
+- **Vercel AI SDK** (`ai`, `@ai-sdk/anthropic`) for streaming
+- **Claude Sonnet 4.6** as the generation model
+- Deployed on **Vercel**
+
+## Run locally
 
 ```bash
+git clone https://github.com/Volkidesu/po-copilot.git
+cd po-copilot
+npm install
+
+# add your Anthropic API key
+echo "ANTHROPIC_API_KEY=sk-ant-..." > .env.local
+
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000), pick a mode, click **Insert example**, and **Generate**.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Get an API key at [console.anthropic.com](https://console.anthropic.com). `.env.local` is gitignored — your key never enters the repo.
