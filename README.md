@@ -4,7 +4,7 @@ An AI product copilot that turns a product idea into a structured **PRD**, break
 
 > Built by [Volkan Bulut](https://www.linkedin.com/) — a product manager moving into AI Product Management, building the things instead of just specifying them.
 
-**Live demo:** _coming soon_
+**Live demo:** [po-copilot.vercel.app](https://po-copilot.vercel.app)
 
 ---
 

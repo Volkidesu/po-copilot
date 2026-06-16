@@ -183,7 +183,15 @@ export default function Home() {
       {/* Footer */}
       <footer className="mt-auto border-t border-black/5 pt-6 text-sm text-zinc-500 dark:border-white/10">
         Demo project · Next.js + Vercel AI SDK + Claude.{" "}
-        <span className="text-zinc-400">Source on GitHub.</span>
+        <a
+          href="https://github.com/Volkidesu/po-copilot"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-zinc-500 underline-offset-2 hover:underline"
+        >
+          Source on GitHub
+        </a>
+        .
       </footer>
     </main>
   );
