@@ -1,6 +1,7 @@
 import { anthropic } from "@ai-sdk/anthropic";
 import { streamText } from "ai";
 import { SYSTEM_PROMPTS, type Mode } from "@/lib/prompts";
+import { ACTIVE_MODEL } from "@/lib/model";
 
 // Allow streamed generations to run up to 60s on Vercel.
 export const maxDuration = 60;
@@ -33,8 +34,7 @@ export async function POST(req: Request) {
   }
 
   const result = streamText({
-    // Workhorse model for the demo (Claude Sonnet 4.6).
-    model: anthropic("claude-sonnet-4-6"),
+    model: anthropic(ACTIVE_MODEL.id),
     system,
     prompt: input,
   });

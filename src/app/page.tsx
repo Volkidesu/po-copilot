@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import { MODES, type Mode } from "@/lib/prompts";
+import { ACTIVE_MODEL } from "@/lib/model";
 
 export default function Home() {
   const [input, setInput] = useState("");
@@ -73,9 +74,18 @@ export default function Home() {
     <main className="mx-auto flex min-h-full w-full max-w-3xl flex-col gap-8 px-5 py-10 sm:py-16">
       {/* Header */}
       <header className="flex flex-col gap-3">
-        <span className="w-fit rounded-full border border-black/10 px-3 py-1 text-xs font-medium text-zinc-500 dark:border-white/15 dark:text-zinc-400">
-          AI Product Copilot · Demo
-        </span>
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="w-fit rounded-full border border-black/10 px-3 py-1 text-xs font-medium text-zinc-500 dark:border-white/15 dark:text-zinc-400">
+            AI Product Copilot · Demo
+          </span>
+          <span
+            title="The model currently generating your output"
+            className="flex w-fit items-center gap-1.5 rounded-full border border-black/10 px-3 py-1 text-xs font-medium text-zinc-500 dark:border-white/15 dark:text-zinc-400"
+          >
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+            Model: {ACTIVE_MODEL.label}
+          </span>
+        </div>
         <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
           PO-Copilot
         </h1>
@@ -92,6 +102,7 @@ export default function Home() {
             {current.hint}
           </label>
           <button
+            type="button"
             onClick={useExample}
             className="text-sm text-zinc-500 underline-offset-2 hover:underline"
           >
@@ -107,6 +118,7 @@ export default function Home() {
         />
         <div className="flex items-center gap-3">
           <button
+            type="button"
             onClick={() => generate()}
             disabled={isLoading || !input.trim()}
             className="rounded-lg bg-zinc-900 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-zinc-700 disabled:cursor-not-allowed disabled:opacity-40 dark:bg-white dark:text-black dark:hover:bg-zinc-200"
@@ -115,6 +127,7 @@ export default function Home() {
           </button>
           {output && !isLoading && (
             <button
+              type="button"
               onClick={copyOutput}
               className="rounded-lg border border-black/10 px-4 py-2.5 text-sm transition-colors hover:bg-black/[.03] dark:border-white/15 dark:hover:bg-white/[.05]"
             >
