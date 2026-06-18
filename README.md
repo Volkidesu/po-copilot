@@ -1,6 +1,6 @@
 # PO-Copilot
 
-An AI product copilot that turns a product idea into a structured **PRD** (Product Requirements Document) — streamed live from Claude.
+A chat-driven Product Owner copilot that interviews you about a product idea and builds a structured **PRD** (Product Requirements Document) live, in a side-by-side panel — backed by real, streamed Claude calls.
 
 > Built by [Volkan Bulut](https://www.linkedin.com/) — a product manager moving into AI Product Management, building the things instead of just specifying them.
 
@@ -10,34 +10,29 @@ An AI product copilot that turns a product idea into a structured **PRD** (Produ
 
 ## What it does
 
-Takes a product idea described in 2–3 sentences and generates a complete, structured PRD including:
+Walks through a short guided conversation — idea → audience → pain points → must-have requirements → out of scope → success metrics → risks — using checkbox option chips plus free-text for anything missing. As you answer, the PRD fills in live on the right:
 
-- Problem & Context
-- Goals and Non-Goals
-- Target Users & Personas
-- High-level User Stories
-- Functional and Non-Functional Requirements
-- **Measurable Success Metrics** (real KPIs, not vague statements)
-- Risks & Open Questions
-- Milestones
+- **Goal & Problem** and **Functional Requirements + Acceptance Criteria** are written by Claude in real time, streamed straight from your answers (no canned text).
+- **Target Audience**, **Out of Scope**, **Success Metrics**, and **Risks & Dependencies** are taken directly from your selections.
 
-The system prompt encodes real product-management craft, so the output reads like a strong product owner wrote it.
+When it's done, copy the Markdown or download it as a `.md` file.
 
 ## Why I built it
 
-As a PM, I know what a *good* PRD looks like. This tool encodes that judgment into the prompt — so it's both a useful product and a demonstration that I can design *and* ship an AI feature end to end.
+As a PM, I know what a *good* PRD looks like and what a good intake conversation looks like. This tool encodes both — the structured interview *and* the judgment about what makes a requirement or acceptance criterion concrete — so it's both a useful product and a demonstration that I can design *and* ship an AI feature end to end.
 
 ## How it works
 
-- **System prompt.** A tailored Claude system prompt in [`src/lib/prompts.ts`](src/lib/prompts.ts) encodes product management best practices.
+- **Wizard data & flow.** [`src/lib/wizard-data.ts`](src/lib/wizard-data.ts) defines the scripted questions and option chips; [`src/lib/wizard-helpers.ts`](src/lib/wizard-helpers.ts) has the pure helpers (parsing, Markdown export, stream reading).
+- **System prompts.** [`src/lib/prompts.ts`](src/lib/prompts.ts) holds two Claude prompts — one for the Goal & Problem paragraph, one for paired Requirements + Acceptance Criteria — each grounded in the structured answers collected so far.
 - **Streaming route handler.** [`src/app/api/generate/route.ts`](src/app/api/generate/route.ts) validates the request and streams the response from Claude via the Vercel AI SDK (`streamText` → `toTextStreamResponse`).
-- **Client.** [`src/app/page.tsx`](src/app/page.tsx) reads the stream and renders it as Markdown in real time.
+- **Client.** [`src/app/page.tsx`](src/app/page.tsx) drives the conversation, fires the two Claude calls at the right points in the flow, and renders the PRD updating live as tokens stream in.
 
 ## Tech stack
 
-- **Next.js** (App Router) + **TypeScript** + **Tailwind CSS**
+- **Next.js** (App Router) + **TypeScript**
 - **Vercel AI SDK** (`ai`, `@ai-sdk/anthropic`) for streaming
-- **Claude Sonnet 4.6** as the generation model
+- **Claude Haiku 4.5** as the generation model
 - Deployed on **Vercel**
 
 ## Run locally
@@ -53,6 +48,6 @@ echo "ANTHROPIC_API_KEY=sk-ant-..." > .env.local
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000), click **Insert example**, and **Generate**.
+Open [http://localhost:3000](http://localhost:3000), pick an example idea (or type your own), and answer the questions.
 
 Get an API key at [console.anthropic.com](https://console.anthropic.com). `.env.local` is gitignored — your key never enters the repo.
