@@ -2,11 +2,20 @@ import { anthropic } from "@ai-sdk/anthropic";
 import { streamText } from "ai";
 import { SYSTEM_PROMPTS, type Mode } from "@/lib/prompts";
 import { ACTIVE_MODEL } from "@/lib/model";
+import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 
 // Allow streamed generations to run up to 60s on Vercel.
 export const maxDuration = 60;
 
 export async function POST(req: Request) {
+  const { allowed, retryAfterSeconds } = checkRateLimit(getClientIp(req));
+  if (!allowed) {
+    return new Response("Too many requests. Please slow down and try again shortly.", {
+      status: 429,
+      headers: { "Retry-After": String(retryAfterSeconds) },
+    });
+  }
+
   let body: { mode?: string; input?: string };
   try {
     body = await req.json();
