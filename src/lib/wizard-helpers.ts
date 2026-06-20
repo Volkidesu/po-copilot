@@ -140,6 +140,7 @@ export function parseCritique(text: string): Finding[] {
     const [a, b, note] = parts;
     if (!a || !b || !note) continue;
     if (!VALID_SECTION_KEYS.has(a as SectionKey) || !VALID_SECTION_KEYS.has(b as SectionKey)) continue;
+    if (a === b) continue;
 
     findings.push({ a: a as SectionKey, b: b as SectionKey, note });
   }

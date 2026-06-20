@@ -328,14 +328,26 @@ export default function Home() {
   async function checkConsistency() {
     if (critique.status === "checking") return;
     setCritique({ status: "checking", findings: [] });
+
+    const controller = new AbortController();
+    abortRef.current?.abort();
+    abortRef.current = controller;
+    const signal = controller.signal;
+
     try {
-      const text = await streamGenerate("wizard-critique", buildMarkdownPrd(prd));
+      const text = await streamGenerate("wizard-critique", buildMarkdownPrd(prd), undefined, signal);
+      if (signal.aborted) return;
       const findings = parseCritique(text);
       setCritique({ status: "done", findings });
       if (findings.length === 0) showToast("No contradictions found");
-    } catch {
+    } catch (err) {
+      if (signal.aborted) return;
       setCritique({ status: "idle", findings: [] });
-      showToast("Couldn't reach Claude — try again in a moment.");
+      if (err instanceof Error && /too long/i.test(err.message)) {
+        showToast("PRD is too long for a consistency check — try trimming free-text answers.");
+      } else {
+        showToast("Couldn't reach Claude — try again in a moment.");
+      }
     }
   }
 

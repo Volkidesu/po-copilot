@@ -32,4 +32,23 @@ assert.deepStrictEqual(
   [],
 );
 
+// "*" bullet character is supported, not just "-"
+assert.deepStrictEqual(
+  parseCritique("## Findings\n* audience | outOfScope | Some note."),
+  [{ a: "audience", b: "outOfScope", note: "Some note." }],
+);
+
+// no "## Findings" header at all: search returns -1, so the whole text is
+// scanned and a valid-looking bullet line is still parsed (intentional fallback)
+assert.deepStrictEqual(
+  parseCritique("- audience | outOfScope | Some note."),
+  [{ a: "audience", b: "outOfScope", note: "Some note." }],
+);
+
+// a finding where a section conflicts with itself is dropped
+assert.deepStrictEqual(
+  parseCritique("## Findings\n- audience | audience | Some note."),
+  [],
+);
+
 console.log("wizard-helpers.test.ts: all assertions passed");
