@@ -9,6 +9,7 @@ import {
   emptyPrd,
   type Answer,
   type ChatMessage,
+  type Finding,
   type FlowStepId,
   type Prd,
 } from "@/lib/wizard-data";
@@ -18,6 +19,7 @@ import {
   fallbackGoalText,
   joinNice,
   listFrom,
+  parseCritique,
   parseHeadedLists,
   streamGenerate,
   toTitle,
@@ -108,6 +110,10 @@ export default function Home() {
   const [toast, setToast] = useState("");
   const [layout, setLayout] = useState<"split" | "focus">("split");
   const [prd, setPrd] = useState<Prd>(emptyPrd());
+  const [critique, setCritique] = useState<{ status: "idle" | "checking" | "done"; findings: Finding[] }>({
+    status: "idle",
+    findings: [],
+  });
 
   // Internal bookkeeping that never renders directly, so it's safe to keep
   // in refs and read synchronously without waiting on React state batching.
@@ -293,6 +299,7 @@ export default function Home() {
     setDone(false);
     setToast("");
     setPrd(emptyPrd());
+    setCritique({ status: "idle", findings: [] });
   }
 
   async function copyMd() {
@@ -316,6 +323,32 @@ export default function Home() {
       // best-effort download; toast still fires so the user gets feedback either way.
     }
     showToast("Markdown downloaded");
+  }
+
+  async function checkConsistency() {
+    if (critique.status === "checking") return;
+    setCritique({ status: "checking", findings: [] });
+
+    const controller = new AbortController();
+    abortRef.current?.abort();
+    abortRef.current = controller;
+    const signal = controller.signal;
+
+    try {
+      const text = await streamGenerate("wizard-critique", buildMarkdownPrd(prd), undefined, signal);
+      if (signal.aborted) return;
+      const findings = parseCritique(text);
+      setCritique({ status: "done", findings });
+      if (findings.length === 0) showToast("No contradictions found");
+    } catch (err) {
+      if (signal.aborted) return;
+      setCritique({ status: "idle", findings: [] });
+      if (err instanceof Error && /too long/i.test(err.message)) {
+        showToast("PRD is too long for a consistency check — try trimming free-text answers.");
+      } else {
+        showToast("Couldn't reach Claude — try again in a moment.");
+      }
+    }
   }
 
   const showPrd = layout === "split";
@@ -464,6 +497,14 @@ export default function Home() {
                     </button>
                     <button onClick={exportMd} className="po-btn-ghost" style={ghostButtonBase(false)}>
                       Download .md
+                    </button>
+                    <button
+                      onClick={checkConsistency}
+                      disabled={critique.status === "checking"}
+                      className="po-btn-ghost"
+                      style={ghostButtonBase(false)}
+                    >
+                      {critique.status === "checking" ? "Checking…" : "Check for contradictions"}
                     </button>
                     <button onClick={reset} className="po-btn-ghost" style={ghostButtonBase(false)}>
                       Start over
@@ -630,8 +671,18 @@ export default function Home() {
 
               {SECTION_ORDER.map((o, i) => {
                 const s = prd[o.key];
+                const sectionFindings = critique.findings.filter((f) => f.a === o.key || f.b === o.key);
+                const flagged = sectionFindings.length > 0;
                 return (
-                  <div key={o.key} style={{ padding: "18px 0", borderTop: "1px solid rgba(201,165,99,.1)" }}>
+                  <div
+                    key={o.key}
+                    style={{
+                      padding: "18px 0",
+                      borderTop: "1px solid rgba(201,165,99,.1)",
+                      borderLeft: flagged ? "3px solid #d9883c" : "none",
+                      paddingLeft: flagged ? 12 : 0,
+                    }}
+                  >
                     <div style={{ display: "flex", alignItems: "center", gap: 9, marginBottom: 11 }}>
                       <span style={{ fontFamily: "var(--font-geist-mono)", fontSize: 11, color: "#5f5848" }}>
                         {String(i + 1).padStart(2, "0")}
@@ -693,6 +744,31 @@ export default function Home() {
                           </li>
                         ))}
                       </ul>
+                    )}
+
+                    {flagged && (
+                      <div style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: 11 }}>
+                        {sectionFindings.map((f, fi) => {
+                          const otherKey = f.a === o.key ? f.b : f.a;
+                          const otherTitle = SECTION_ORDER.find((sec) => sec.key === otherKey)?.title ?? otherKey;
+                          return (
+                            <div
+                              key={fi}
+                              style={{
+                                fontSize: 12.5,
+                                lineHeight: 1.5,
+                                color: "#e3b685",
+                                background: "rgba(217,136,60,.1)",
+                                border: "1px solid rgba(217,136,60,.3)",
+                                borderRadius: 8,
+                                padding: "8px 11px",
+                              }}
+                            >
+                              ⚠ Conflicts with <strong>{otherTitle}</strong>: {f.note}
+                            </div>
+                          );
+                        })}
+                      </div>
                     )}
                   </div>
                 );

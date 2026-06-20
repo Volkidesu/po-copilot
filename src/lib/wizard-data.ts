@@ -133,6 +133,10 @@ export type Prd = {
   risks: ListSection;
 };
 
+export type SectionKey = keyof Omit<Prd, "title">;
+
+export type Finding = { a: SectionKey; b: SectionKey; note: string };
+
 export type ChatMessage =
   | { role: "agent"; kind: "text"; text: string }
   | { role: "user"; kind: "text"; text: string }
