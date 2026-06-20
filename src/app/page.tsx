@@ -9,6 +9,7 @@ import {
   emptyPrd,
   type Answer,
   type ChatMessage,
+  type Finding,
   type FlowStepId,
   type Prd,
 } from "@/lib/wizard-data";
@@ -18,6 +19,7 @@ import {
   fallbackGoalText,
   joinNice,
   listFrom,
+  parseCritique,
   parseHeadedLists,
   streamGenerate,
   toTitle,
@@ -108,6 +110,10 @@ export default function Home() {
   const [toast, setToast] = useState("");
   const [layout, setLayout] = useState<"split" | "focus">("split");
   const [prd, setPrd] = useState<Prd>(emptyPrd());
+  const [critique, setCritique] = useState<{ status: "idle" | "checking" | "done"; findings: Finding[] }>({
+    status: "idle",
+    findings: [],
+  });
 
   // Internal bookkeeping that never renders directly, so it's safe to keep
   // in refs and read synchronously without waiting on React state batching.
@@ -293,6 +299,7 @@ export default function Home() {
     setDone(false);
     setToast("");
     setPrd(emptyPrd());
+    setCritique({ status: "idle", findings: [] });
   }
 
   async function copyMd() {
@@ -316,6 +323,20 @@ export default function Home() {
       // best-effort download; toast still fires so the user gets feedback either way.
     }
     showToast("Markdown downloaded");
+  }
+
+  async function checkConsistency() {
+    if (critique.status === "checking") return;
+    setCritique({ status: "checking", findings: [] });
+    try {
+      const text = await streamGenerate("wizard-critique", buildMarkdownPrd(prd));
+      const findings = parseCritique(text);
+      setCritique({ status: "done", findings });
+      if (findings.length === 0) showToast("No contradictions found");
+    } catch {
+      setCritique({ status: "idle", findings: [] });
+      showToast("Couldn't reach Claude — try again in a moment.");
+    }
   }
 
   const showPrd = layout === "split";
@@ -464,6 +485,14 @@ export default function Home() {
                     </button>
                     <button onClick={exportMd} className="po-btn-ghost" style={ghostButtonBase(false)}>
                       Download .md
+                    </button>
+                    <button
+                      onClick={checkConsistency}
+                      disabled={critique.status === "checking"}
+                      className="po-btn-ghost"
+                      style={ghostButtonBase(false)}
+                    >
+                      {critique.status === "checking" ? "Checking…" : "Check for contradictions"}
                     </button>
                     <button onClick={reset} className="po-btn-ghost" style={ghostButtonBase(false)}>
                       Start over
