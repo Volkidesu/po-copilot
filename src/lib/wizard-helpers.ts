@@ -1,4 +1,5 @@
-import type { Answer, Prd } from "./wizard-data";
+import { SECTION_ORDER } from "./wizard-data";
+import type { Answer, Finding, Prd, SectionKey } from "./wizard-data";
 
 export function listFrom(a?: Answer): string[] {
   if (!a) return [];
@@ -112,4 +113,36 @@ export async function streamGenerate(
     onChunk?.(acc);
   }
   return acc;
+}
+
+const VALID_SECTION_KEYS = new Set<SectionKey>(SECTION_ORDER.map((s) => s.key));
+
+// Parses the pipe-delimited findings list Claude returns for the
+// "wizard-critique" prompt: "## Findings" followed by zero or more
+// "- <sectionKeyA> | <sectionKeyB> | <note>" lines. Malformed lines are
+// dropped rather than thrown, since an empty findings list and a parse
+// failure both mean the same thing to the UI: no contradictions to show.
+export function parseCritique(text: string): Finding[] {
+  const splitAt = text.search(/##\s*Findings/i);
+  const block = splitAt >= 0 ? text.slice(splitAt) : text;
+  const findings: Finding[] = [];
+
+  for (const rawLine of block.split("\n")) {
+    const line = rawLine.trim();
+    if (!line.startsWith("-") && !line.startsWith("*")) continue;
+
+    const parts = line
+      .replace(/^[-*]\s*/, "")
+      .split("|")
+      .map((p) => p.trim());
+    if (parts.length !== 3) continue;
+
+    const [a, b, note] = parts;
+    if (!a || !b || !note) continue;
+    if (!VALID_SECTION_KEYS.has(a as SectionKey) || !VALID_SECTION_KEYS.has(b as SectionKey)) continue;
+
+    findings.push({ a: a as SectionKey, b: b as SectionKey, note });
+  }
+
+  return findings;
 }
