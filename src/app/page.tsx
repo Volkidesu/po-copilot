@@ -659,8 +659,18 @@ export default function Home() {
 
               {SECTION_ORDER.map((o, i) => {
                 const s = prd[o.key];
+                const sectionFindings = critique.findings.filter((f) => f.a === o.key || f.b === o.key);
+                const flagged = sectionFindings.length > 0;
                 return (
-                  <div key={o.key} style={{ padding: "18px 0", borderTop: "1px solid rgba(201,165,99,.1)" }}>
+                  <div
+                    key={o.key}
+                    style={{
+                      padding: "18px 0",
+                      borderTop: "1px solid rgba(201,165,99,.1)",
+                      borderLeft: flagged ? "3px solid #d9883c" : "none",
+                      paddingLeft: flagged ? 12 : 0,
+                    }}
+                  >
                     <div style={{ display: "flex", alignItems: "center", gap: 9, marginBottom: 11 }}>
                       <span style={{ fontFamily: "var(--font-geist-mono)", fontSize: 11, color: "#5f5848" }}>
                         {String(i + 1).padStart(2, "0")}
@@ -722,6 +732,31 @@ export default function Home() {
                           </li>
                         ))}
                       </ul>
+                    )}
+
+                    {flagged && (
+                      <div style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: 11 }}>
+                        {sectionFindings.map((f, fi) => {
+                          const otherKey = f.a === o.key ? f.b : f.a;
+                          const otherTitle = SECTION_ORDER.find((sec) => sec.key === otherKey)?.title ?? otherKey;
+                          return (
+                            <div
+                              key={fi}
+                              style={{
+                                fontSize: 12.5,
+                                lineHeight: 1.5,
+                                color: "#e3b685",
+                                background: "rgba(217,136,60,.1)",
+                                border: "1px solid rgba(217,136,60,.3)",
+                                borderRadius: 8,
+                                padding: "8px 11px",
+                              }}
+                            >
+                              ⚠ Conflicts with <strong>{otherTitle}</strong>: {f.note}
+                            </div>
+                          );
+                        })}
+                      </div>
                     )}
                   </div>
                 );
