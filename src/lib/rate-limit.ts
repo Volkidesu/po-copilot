@@ -1,3 +1,5 @@
+import { ipAddress } from "@vercel/functions";
+
 // In-memory, per-instance IP rate limiter. Good enough to stop casual
 // spam/cost-abuse on a low-traffic demo; not a distributed/global limit —
 // each warm Fluid Compute instance tracks its own counters and resets on
@@ -37,7 +39,7 @@ export function checkRateLimit(key: string): { allowed: boolean; retryAfterSecon
 }
 
 export function getClientIp(req: Request): string {
-  const forwarded = req.headers.get("x-forwarded-for");
-  if (forwarded) return forwarded.split(",")[0].trim();
-  return req.headers.get("x-real-ip") ?? "unknown";
+  // ipAddress() reads Vercel's platform-set headers, which the client
+  // cannot spoof (unlike trusting x-forwarded-for/x-real-ip directly).
+  return ipAddress(req) ?? "unknown";
 }
